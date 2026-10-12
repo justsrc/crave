@@ -27,6 +27,25 @@ sync_sources() {
     "resync returned zero without repo's success message; inspect $sync_log"
 }
 
+report_script_identity() {
+  local self sha revision
+
+  self="${BASH_SOURCE[0]:-$0}"
+  if [[ -f "$self" ]]; then
+    if sha=$(sha256sum "$self" 2>/dev/null | cut -d' ' -f1); then
+      printf '[script] sha256 %s %s\n' "$sha" "$self"
+    fi
+  else
+    printf '[script] sha256 unavailable; script was not a readable file\n'
+  fi
+
+  if revision=$(git ls-remote https://github.com/justsrc/crave main 2>/dev/null | cut -f1); then
+    if [[ -n "$revision" ]]; then
+      printf '[script] upstream main %s\n' "$revision"
+    fi
+  fi
+}
+
 report_revisions() {
   local path revision
   for path in \
@@ -204,6 +223,7 @@ main() {
   cd "$ROOT"
   preflight
   prepare_keys
+  report_script_identity
   report_revisions
   setup_environment
 
